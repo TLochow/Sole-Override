@@ -1,11 +1,17 @@
 extends Node2D
 
+# Huh, you shouldn't be able to get here.
+# But now that you found your way here, nothing to stop you.
+# Have fun!
+
 var CurrentBody
 var CurrentScript
 var PreviousBody
 var PreviousScript
 
 var ScriptEdit = false
+
+var FreeEdit = false
 
 func _process(delta):
 	$ScriptScan.set_position(.get_global_mouse_position())
@@ -29,14 +35,15 @@ func _on_ApplyButton_pressed():
 			var previousBody = PreviousBody.get_ref()
 			if previousBody == CurrentBody:
 				CurrentScript = PreviousScript
-			if IsEditDistanceOne(newScript, CurrentScript):
-				previousBody.get_script().source_code = PreviousScript
-				previousBody.get_script().reload(true)
+			if IsEditDistanceOne(newScript, CurrentScript) or FreeEdit:
+				if not FreeEdit:
+					previousBody.get_script().source_code = PreviousScript
+					previousBody.get_script().reload(true)
 				ApplyScriptChange(newScript)
 			else:
 				validChange = false
 		else:
-			if IsEditDistanceOne(newScript, CurrentScript):
+			if IsEditDistanceOne(newScript, CurrentScript) or FreeEdit:
 				ApplyScriptChange(newScript)
 			else:
 				validChange = false
@@ -95,3 +102,37 @@ func IsEditDistanceOne(s1, s2):
 	if i < m or j < n: 
 		count+=1
 	return count <= 1
+
+func _on_Goal_body_entered(body):
+	if not FreeEdit:
+		FreeEdit = true
+		$Goal.visible = false
+		$TileMap/Labels/Label6.visible = true
+		$TileMap/Labels/Label6.set_position($GameObjects/Player.get_position() + Vector2(50.0, -150.0))
+		$TileMap/Labels/Label.visible = false
+		$TileMap/Labels/Label2.visible = false
+		$TileMap/Labels/Label3.visible = false
+		$TileMap/Labels/Label4.visible = false
+		$TileMap/Labels/Label5.visible = false
+		
+		$GameObjects/Player.set_collision_layer_bit(5, true)
+		$GameObjects/Player.set_collision_mask_bit(5, true)
+		
+		$TimerTrigger.set_collision_layer_bit(5, true)
+		$TimerTrigger.set_collision_mask_bit(5, true)
+		
+		$EndGoal.visible = true
+		$EndGoal.set_collision_layer_bit(5, true)
+		$EndGoal.set_collision_mask_bit(5, true)
+
+func _on_TimerTrigger_body_entered(body):
+	$TileMap/Labels/Label6.visible = false
+	$TileMap/Labels/Label7.visible = true
+	$TileMap/Labels/Label7.set_position($GameObjects/Player.get_position() + Vector2(50.0, -150.0))
+	$Timer.visible = true
+	$Timer.StartTimer()
+	$Timer.set_collision_layer_bit(9, true)
+	$Timer.set_collision_mask_bit(9, true)
+
+func _on_EndGoal_body_entered(body):
+	get_tree().change_scene("res://Win.tscn")

@@ -1,5 +1,7 @@
 extends KinematicBody2D
 
+# Ah, you found your way here, good thinking!
+
 func _physics_process(delta):
 	var motion = Vector2(0.0, 0.0)
 	if Input.is_action_pressed("ui_up"):
